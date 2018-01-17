@@ -1,6 +1,6 @@
 /**
  * ==========================
- * @description Entry point of the library.
+ * @description constraint identifier type list.
  * ==========================
  *
  * @author  Evgeny Savelyev
@@ -11,6 +11,10 @@
 
 "use strict";
 
-/* TODO */
+const IdentType = Object.freeze({
+    BASIC     : 1,
+    TEMPLATED : 2,
+    REDUCER   : 3
+});
 
-exports = module.exports = {};
+exports = module.exports = IdentType;

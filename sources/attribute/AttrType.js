@@ -1,6 +1,6 @@
 /**
  * ==========================
- * @description Entry point of the library.
+ * @description Attribute type list.
  * ==========================
  *
  * @author  Evgeny Savelyev
@@ -11,6 +11,11 @@
 
 "use strict";
 
-/* TODO */
+const AttrType = Object.freeze({
+    INT   : 1,
+    FLOAT : 2,
+    STR   : 3,
+    BOOL  : 4
+});
 
-exports = module.exports = {};
+exports = module.exports = AttrType;
