@@ -6,7 +6,7 @@
  * @author  Evgeny Savelyev
  * @since   17.01.18
  * @version 1.0.0
- * @licence See the LICENCE file in the project root.
+ * @license See the LICENCE file in the project root.
  */
 
 "use strict";
