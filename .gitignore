@@ -33,3 +33,6 @@ docs
 
 # coverage output
 coverage
+
+# package lock
+package-lock.json
