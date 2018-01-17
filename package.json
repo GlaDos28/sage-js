@@ -1,0 +1,29 @@
+{
+  "name": "sage-js",
+  "version": "1.0.0",
+  "description": "Systemized Attribute Generation Engine - mechanism for generating attributes with given constraints",
+  "main": "index.js",
+  "scripts": {
+    "run": "node index.js",
+    "test": "mocha",
+    "coverage": "nyc mocha",
+    "docs": "jsdoc -c jsdoc-conf.json ./"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GlaDos28/sage-js.git"
+  },
+  "keywords": [
+    "SAGE",
+    "generation",
+    "generating",
+    "attribute",
+    "constraint"
+  ],
+  "author": "Evgeny Savelyev",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/GlaDos28/sage-js/issues"
+  },
+  "homepage": "https://github.com/GlaDos28/sage-js#readme"
+}
