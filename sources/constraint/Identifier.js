@@ -1,6 +1,6 @@
 /**
  * ==========================
- * @description Constraint identifier. Can be one of the forms given in CIdentType list.
+ * @description Constraint identifier. Can be one of the forms given in IdentType list.
  * ==========================
  *
  * @author  Evgeny Savelyev
@@ -11,24 +11,39 @@
 
 "use strict";
 
-function ensureValid(type, expr) {
-    return true; /* TODO ensure validness */
-}
-
-/* TODO perhaps subclasses instead of given type and expression? (different types have different identifier properties) */
+const IdentType = require("./IdentType");
 
 /**
  * @class
- * @classdesc Constraint identifier. Can be one of the forms given in CIdentType list.
+ * @classdesc Constraint identifier. Can be one of the forms given in IdentType list.
  *
  * @property {IdentType} type identifier type from the list
  * @property {string} expr expression of the required form
+ * @property {string|undefined} id attribute id (for IdentType.BASIC only)
+ * @property {int|undefined} templateNum index of template used (for IdentType.TEMPLATED and IdentType.REDUCER only)
+ * @property {string|undefined} postfix string added after template prefix (for IdentType.TEMPLATED and IdentType.REDUCER only)
+ * @property {function|undefined} reduceFunc reducer function (for IdentType.REDUCER only)
  */
 class Identifier {
-    constructor(type, expr) {
-        ensureValid(type, expr);
+    constructor(type, args) {
         this.type = type;
-        this.expr = expr;
+
+        switch (type) {
+            case IdentType.BASIC:
+                this.id = args.id;
+                break;
+            case IdentType.TEMPLATED:
+                this.templateNum = args.templateNum;
+                this.postfix     = args.postfix;
+                break;
+            case IdentType.REDUCER:
+                this.templateNum = args.templateNum;
+                this.postfix     = args.postfix;
+                this.reduceFunc  = args.reduceFunc;
+                break;
+            default:
+                throw new Error("oops! Not supported identifier type: " + type);
+        }
     }
 }
 

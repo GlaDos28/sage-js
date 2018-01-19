@@ -17,6 +17,18 @@
  * @class
  * @classdesc Regular expression implementation. Used for defining templated identifiers in constrains, as well as in pushing trie algorithm.
  */
-class Regex {}
+class Regex {
+    firstSymbolMatches(symbol) {
+        return false; /* TODO */
+    }
+
+    detachFirstSymbol(symbol) {
+        return this; /* TODO */
+    }
+
+    isEmpty() {
+        return false; /* TODO */
+    }
+}
 
 exports = module.exports = Regex;

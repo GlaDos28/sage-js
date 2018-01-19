@@ -15,7 +15,7 @@
 
 /**
  * @class
- * @classdesc Predicate compiled body. Used for generating attributes' values. Is a result of constraint predicate compiler.
+ * @classdesc Predicate compiled body. Used for generating attributes' tvalues. Is a result of constraint predicate compiler.
  */
 class CompiledBody {}
 

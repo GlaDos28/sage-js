@@ -17,33 +17,53 @@ const PushingTrie = require("../algorithms/PushingTrie");
  * @class
  * @classdesc Attribute-Constraint Net. Core of SAGE mechanism.
  *
- * @property {Attribute[]} attributes net attributes
+ * @property {map<string, Attribute>} attributes net attributes (mapped with attribute identifiers)
  * @property {Constraint[]} constraints net constraints
  * @property {map<string, object>} meta meta-information entry point for different algorithms
  */
 class ACN {
     constructor() {
-        this.attributes  = [];
+        this.attributes  = {};
         this.constraints = [];
         this.meta        = {};
 
-        this.initMeta();
+        this.__initMeta__();
     }
 
-    initMeta() {
+    __initMeta__() {
         this.meta.pushingTrie = new PushingTrie();
     }
 
+    /**
+     * @desc Add new attribute into the net.
+     *
+     * @param {Attribute} attribute new attribute
+     * @returns {void} nothing
+     */
     addAttribute(attribute) {
-        /* TODO adding new attribute */
+        this.attributes[attribute.id] = attribute;
+        this.meta.pushingTrie.putString(attribute.id);
     }
 
+    /**
+     * @desc Add new constraint into the net.
+     *
+     * @param {Constraint} constraint new constraint
+     * @returns {void} nothing
+     */
     addConstraint(constraint) {
-        /* TODO adding new constraint */
+        this.constraints.push(constraint);
+        constraint.pushToTrie((id) => this.attributes[id].fixed, this.meta.pushingTrie);
     }
 
-    generateComponent(attributes) {
-        /* TODO generate attributes */
+    /**
+     * @desc Generate tvalues for given attributes.
+     *
+     * @param {string[]} attrIds attributes' identifiers. Must form a single component and be the only elements of this component
+     * @returns {object[]} generated tvalues for each attribute
+     */
+    generateComponent(attrIds) {
+        return null; /* TODO generate attributes */
     }
 }
 
