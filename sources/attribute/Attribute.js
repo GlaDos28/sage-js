@@ -11,6 +11,8 @@
 
 "use strict";
 
+const DSU = require("../algorithms/DSU");
+
 /**
  * @class
  * @classdesc Net attribute definition. One of the base elements of SAGE mechanism.
@@ -18,7 +20,7 @@
  * @property {AttrType} type attribute type from list
  * @property {Distribution} distribution attribute value probability distribution
  * @property {Domain} domain attribute determination area
- * @property {Map} meta meta-information entry point for different algorithms
+ * @property {map<string, object>} meta meta-information entry point for different algorithms
  */
 class Attribute {
     constructor(type, distribution, domain) {
@@ -26,6 +28,10 @@ class Attribute {
         this.distribution = distribution;
         this.domain       = domain;
         this.meta         = {};
+    }
+
+    initMeta() {
+        this.meta.dsu = new DSU();
     }
 }
 

@@ -17,7 +17,7 @@
  * @class
  * @classdesc Probability distribution F: (-inf, +inf) -> [0, 1]. Must be piecewise continuous.
  *
- * @property {function} func probability distribution piecewise continuous function F: (-inf, +inf) -> [0, 1]. Allowed to be defined on subset of real numbers, according to domain.
+ * @property {function(number):number} func probability distribution piecewise continuous function F: (-inf, +inf) -> [0, 1]. Allowed to be defined on subset of real numbers, according to domain.
  * @property {Domain} domain definition of intervals of determination of the function.
  */
 class Distribution {
