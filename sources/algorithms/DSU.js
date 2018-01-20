@@ -33,19 +33,21 @@ class DSU {
         this.nodeNum = 1;
     }
 
-    union(dsuNode) {
-        if (dsuNode.nodeNum > this.nodeNum) {
-            this.parent = dsuNode.parent;
-            dsuNode.nodeNum += this.nodeNum;
-        } else {
-            dsuNode.parent = this.parent;
-            this.nodeNum += dsuNode.nodeNum;
-        }
-    }
-
     getComponent() {
         this.__updateParent__();
         return this.parent.id;
+    }
+
+    union(dsuNode) {
+        if (this.getComponent() !== dsuNode.getComponent()) {
+            if (dsuNode.nodeNum > this.nodeNum) {
+                this.parent = dsuNode.parent;
+                dsuNode.nodeNum += this.nodeNum;
+            } else {
+                dsuNode.parent = this.parent;
+                this.nodeNum += dsuNode.nodeNum;
+            }
+        }
     }
 
     __updateParent__() {

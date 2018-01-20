@@ -53,7 +53,7 @@ class ACN {
      */
     addConstraint(constraint) {
         this.constraints.push(constraint);
-        constraint.pushToTrie((id) => this.attributes[id].fixed, this.meta.pushingTrie);
+        constraint.pushToTrie(this.attributes, this.meta.pushingTrie);
     }
 
     /**

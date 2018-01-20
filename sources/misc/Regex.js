@@ -11,23 +11,29 @@
 
 "use strict";
 
-/* TODO implementation */
+/* TODO real implementation (not constant strings only) */
 
 /**
  * @class
  * @classdesc Regular expression implementation. Used for defining templated identifiers in constrains, as well as in pushing trie algorithm.
+ *
+ * @property {string|null} str regex string representation. May be null (because used for debugging only)
  */
 class Regex {
+    constructor(regexString) {
+        this.str = regexString;
+    }
+
     firstSymbolMatches(symbol) {
-        return false; /* TODO */
+        return this.str.startsWith(symbol);
     }
 
     detachFirstSymbol(symbol) {
-        return this; /* TODO */
+        return new Regex(this.str.substr(1));
     }
 
     isEmpty() {
-        return false; /* TODO */
+        return this.str.length === 0;
     }
 }
 
