@@ -3,7 +3,7 @@
  * @description Array with multiple indexes. Allows adding and getting values by given array of indexes.
  * ==========================
  *
- * @author Evgeny Savelyev
+ * @author  Evgeny Savelyev
  * @since   19.01.17
  * @version 1.0.0
  * @licence See the LICENCE file in the project root.
