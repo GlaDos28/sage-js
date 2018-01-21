@@ -32,5 +32,9 @@
     "jsdoc": "^3.5.5",
     "mocha": "^4.1.0",
     "nyc": "^11.4.1"
+  },
+  "dependencies": {
+    "graphviz": "0.0.8",
+    "jsesc": "^2.5.1"
   }
 }

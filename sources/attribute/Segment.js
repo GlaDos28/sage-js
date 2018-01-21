@@ -20,6 +20,10 @@
  */
 class Segment {
     constructor(left, right) {
+        if (left > right) {
+            throw new Error(`segment left bound must be less or equal than right bound. Given [${left}, ${right}]`);
+        }
+
         this.left  = left;
         this.right = right;
     }

@@ -11,8 +11,9 @@
 
 "use strict";
 
-const IdentType  = require("./IdentType");
-const Regex      = require("../misc/Regex");
+const IdentType = require("./IdentType");
+const Regex     = require("../misc/Regex");
+const Cluster   = require("./Cluster");
 
 /**
  * @class
@@ -33,10 +34,6 @@ class Constraint {
         this.__initMeta__();
     }
 
-    constraintResolved() {
-        return this.meta.basicIdents.resolvedNum === this.meta.basicIdents.relatedIdents.length;
-    }
-
     /**
      * @desc pushes regexes into pushing trie. Must be called right after adding constraint into the ACN
      *
@@ -50,30 +47,53 @@ class Constraint {
 
         for (let i = 0; i < this.meta.basicIdents.relatedIdents.length; i += 1) {
             trie.putRegex(new Regex(this.idents[this.meta.basicIdents.relatedIdents[i]].id), (str, node) => {
+                const attr = attributes[str];
+
+                this.meta.common.resolvedAttrs.push(attr);
+                attr.meta.constraints.push(this);
+
                 this.meta.basicIdents.resolvedNum += 1;
 
-                if (!attributes[str].fixed) {
+                if (!attr.fixed) {
                     if (this.__fusionClusters__()) {
-                        attributes[str].meta.dsu.union(this.meta.common.fusionDsuElem);
+                        this.meta.clusters[0].addAttributes(attr);
                     } else {
-                        this.meta.common.fusionDsuElem = attributes[str].meta.dsu;
+                        this.meta.common.fusionAttr = attr;
                         this.__mergeClusters__();
                     }
                 }
-            });
+
+                if (this.__hasPredicateInstance__()) {
+                    if (this.__fusionClusters__()) {
+                        this.meta.clusters[0].resolve();
+                    } else if (this.meta.templatedIdents.nonFixedValue !== null) {
+                        for (const resolvedTemplateInd in this.meta.templatedIdents.resolvedTemplateClusterMap) {
+                            if (this.meta.templatedIdents.resolvedTemplateClusterMap.hasOwnProperty(resolvedTemplateInd)) {
+                                const tvalue = this.meta.templatedIdents.tvalues[this.meta.templatedIdents.nonFixedValue];
+
+                                if (tvalue.templateResolves[resolvedTemplateInd].resolvedIdentNum === tvalue.relatedIdents.length) {
+                                    const cluster = this.meta.templatedIdents.resolvedTemplateClusterMap[resolvedTemplateInd];
+
+                                    if (cluster) {
+                                        cluster.resolve();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }, true);
         }
 
         /* Templated identifiers */
 
         for (let i = 0; i < this.meta.templatedIdents.tvalues.length; i += 1) {
-            const tvalue = this.templates[this.meta.templatedIdents.tvalues[i];
+            const tvalue = this.meta.templatedIdents.tvalues[i];
 
-            trie.putRegex(new Regex(this.templates[tvalue.template]), (str, node) => {
+            trie.putRegex(this.templates[tvalue.template], (str, node) => {
                 const bufInd = tvalue.templateResolves.length;
 
                 tvalue.templateResolves.push({
-                    resolvedTemplate : str,
-                    nonFixedIdentDsu : null,
                     resolvedIdents   : [],
                     resolvedIdentNum : 0
                 });
@@ -85,34 +105,60 @@ class Constraint {
                     templateResolves.resolvedIdents.push(null);
 
                     node.pushRegex(new Regex(this.idents[tvalue.relatedIdents[j]].postfix), (finalStr, finalNode) => {
+                        const attr = attributes[finalStr];
+
+                        this.meta.common.resolvedAttrs.push(attr);
+                        attr.meta.constraints.push(this);
+
                         templateResolves.resolvedIdents[j] = finalStr;
                         templateResolves.resolvedIdentNum += 1;
 
-                        if (!attributes[finalStr].fixed) {
-                            templateResolves.nonFixedIdentDsu = attributes[finalStr].meta.dsu;
-
-                            if (this.__fusionClusters__()) {
-                                templateResolves.nonFixedIdentDsu.union(this.meta.common.fusionDsuElem);
-                            } else if (this.meta.templatedIdents.nonFixedValue !== null && this.meta.templatedIdents.nonFixedValue !== i) {
-                                this.meta.common.fusionDsuElem = templateResolves.nonFixedIdentDsu;
-                                this.__mergeClusters__();
-                            } else {
-                                this.meta.templatedIdents.nonFixedValue = i;
-                            }
+                        if (!attr.fixed) {
+                            this.meta.templatedIdents.resolvedTemplateClusterMap[bufInd] = false; /* "false" indicates existence of non-fixed attribute */
                         }
 
-                        /* Merge attributes inside a cluster whether all of them are resolved */
+                        if (templateResolves.resolvedIdentNum === relatedIdentNum) {
+                            let cluster = this.meta.templatedIdents.resolvedTemplateClusterMap[bufInd];
 
-                        if (templateResolves.resolvedIdentNum === relatedIdentNum && templateResolves.nonFixedIdentDsu !== null) {
-                            for (const resolvedIdent of templateResolves.resolvedIdents) {
-                                if (!attributes[resolvedIdent].fixed) {
-                                    attributes[resolvedIdent].meta.dsu.union(templateResolves.nonFixedIdentDsu);
+                            if (cluster === false) {
+                                const nonFixedAttrs = [];
+
+                                for (const attrId of templateResolves.resolvedIdents) {
+                                    if (!attributes[attrId].fixed) {
+                                        nonFixedAttrs.push(attributes[attrId]);
+                                    }
+                                }
+
+                                if (this.__fusionClusters__()) {
+                                    this.meta.clusters[0].addAttributes(...nonFixedAttrs);
+                                } else {
+                                    this.meta.templatedIdents.nonFixedValue = i;
+                                    cluster = new Cluster(this, ...nonFixedAttrs);
+                                    this.meta.clusters.push(cluster);
+                                }
+
+                                if (this.meta.templatedIdents.nonFixedValue !== null && this.meta.templatedIdents.nonFixedValue !== i) {
+                                    [this.meta.common.fusionAttr] = nonFixedAttrs;
+                                    this.__mergeClusters__();
+                                }
+                            }
+
+                            if (!tvalue.hasResolved) {
+                                tvalue.hasResolved = true;
+                                this.meta.templatedIdents.hasResolvedNum += 1;
+                            }
+
+                            if (this.__hasPredicateInstance__()) {
+                                if (this.__fusionClusters__()) {
+                                    this.meta.clusters[0].resolve();
+                                } else if (cluster) {
+                                    cluster.resolve();
                                 }
                             }
                         }
-                    }, str + this.idents[tvalue.relatedIdents[j]].postfix);
+                    }, true, str);
                 }
-            });
+            }, false);
         }
 
         /* Reducer identifiers */
@@ -120,39 +166,62 @@ class Constraint {
         for (let i = 0; i < this.meta.reducerIdents.tvalues.length; i += 1) {
             const tvalue = this.meta.reducerIdents.tvalues[i];
 
-            trie.putRegex(new Regex(this.templates[tvalue.template]), (str, node) => {
+            trie.putRegex(this.templates[tvalue.template], (str, node) => {
                 for (let j = 0; j < tvalue.relatedIdents.length; j += 1) {
                     node.pushRegex(new Regex(this.idents[tvalue.relatedIdents[j]].postfix), (finalStr, finalNode) => {
+                        const attr = attributes[finalStr];
+
+                        this.meta.common.resolvedAttrs.push(attr);
+                        attr.meta.constraints.push(this);
+
                         tvalue.identResolves[j].push(finalStr);
 
-                        if (!attributes[finalStr].fixed) {
+                        if (!attr.fixed) {
                             if (this.__fusionClusters__()) {
-                                attributes[finalStr].meta.dsu.union(this.meta.common.fusionDsuElem);
+                                this.meta.clusters[0].addAttributes(attr);
                             } else {
-                                this.meta.common.fusionDsuElem = attributes[finalStr].meta.dsu;
+                                this.meta.common.fusionAttr = attr;
                                 this.__mergeClusters__();
                             }
                         }
-                    }, str + this.idents[tvalue.relatedIdents[j]].postfix);
+                    }, true, str);
                 }
-            });
+            }, false);
         }
     }
 
-    __initMeta__() { /* TODO init meta for predicate */
+    allClustersResolved() {
+        for (const cluster of this.meta.clusters) {
+            if (!cluster.resolved) {
+                return false;
+            }
+        }
 
-        /* Common, basic identifiers, templated identifiers and reducers meta data */
+        return true;
+    }
 
-        this.meta.common = { fusionDsuElem : null }; /* If null then clusters should not be merged */
+    __initMeta__() {
+        this.__initIdentMeta__();
+        this.__initClusterMeta__();
+        this.__initPredicateMeta__();
+    }
+
+    __initIdentMeta__() {
+        this.meta.common = {
+            fusionAttr    : null, /* If null then clusters should not be merged */
+            resolvedAttrs : []
+        };
 
         this.meta.basicIdents = {
-            resolvedNum   : [],
+            resolvedNum   : 0,
             relatedIdents : []
         };
 
         this.meta.templatedIdents = {
-            nonFixedValue : null,
-            tvalues       : []
+            nonFixedValue              : null,
+            tvalues                    : [],
+            resolvedTemplateClusterMap : {}, /* Mappings { index : cluster }. Used in non-fusion cases */
+            hasResolvedNum             : 0
         };
 
         this.meta.reducerIdents = { tvalues : [] };
@@ -174,12 +243,13 @@ class Constraint {
                         throw new Error(`template ${templateInfo.template} is used for both templated and reducer identifiers`);
                     }
 
-                    templateInfo.relatedIdents.push(i);
+                    templateInfo.ref.relatedIdents.push(i);
                 } else {
                     this.meta.templatedIdents.tvalues.push({
                         template         : this.idents[i].templateNum,
                         relatedIdents    : [i],
-                        templateResolves : [] /* Array of { resolvedTemplate, nonFixedIdentDsu, resolvedIdents, resolvedIdentNum } */
+                        templateResolves : [], /* Array of { resolvedIdents, resolvedIdentNum } */
+                        hasResolved      : false
                     });
 
                     templateInfoMap[this.idents[i].templateNum] = {
@@ -193,13 +263,12 @@ class Constraint {
                 templateInfo = templateInfoMap[this.idents[i].templateNum];
 
                 if (templateInfo) {
-
                     if (!templateInfo.isReducer) {
                         throw new Error(`template ${templateInfo.template} is used for both templated and reducer identifiers`);
                     }
 
-                    templateInfo.relatedIdents.push(i);
-                    templateInfo.identResolves.push([]);
+                    templateInfo.ref.relatedIdents.push(i);
+                    templateInfo.ref.identResolves.push([]);
                 } else {
                     this.meta.reducerIdents.tvalues.push({
                         template      : this.idents[i].templateNum,
@@ -226,19 +295,45 @@ class Constraint {
         }
     }
 
+    __initClusterMeta__() {
+        this.meta.clusters = [];
+    }
+
+    __initPredicateMeta__() {
+        /* TODO init meta for predicate */
+    }
+
     __fusionClusters__() {
-        return this.meta.common.fusionDsuElem !== null;
+        return this.meta.common.fusionAttr !== null;
+    }
+
+    __hasPredicateInstance__() {
+        return this.meta.basicIdents.resolvedNum === this.meta.basicIdents.relatedIdents.length &&
+            this.meta.templatedIdents.hasResolvedNum === this.meta.templatedIdents.tvalues.length;
     }
 
     __mergeClusters__() {
-        if (this.meta.templatedIdents.nonFixedValue !== null) {
-            const tvalue = this.meta.templatedIdents.tvalues[this.meta.templatedIdents.nonFixedValue];
+        if (this.meta.clusters.length === 0) {
+            this.meta.clusters.push(new Cluster(this, this.meta.common.fusionAttr));
+        } else {
 
-            for (const resolveBatch of tvalue.templateResolves) {
-                if (resolveBatch.resolvedIdentNum === tvalue.relatedIdents.length && resolveBatch.nonFixedIdentDsu !== null) {
-                    resolveBatch.nonFixedIdentDsu.union(this.meta.common.fusionDsuElem);
-                }
+            /* Merge clusters */
+
+            for (let i = 1; i < this.meta.clusters.length; i += 1) {
+                this.meta.clusters[0].mergeCluster(this.meta.clusters[i]);
             }
+
+            /* Making the first (merged) cluster the only one */
+
+            this.meta.clusters = [this.meta.clusters[0]];
+
+            /* Add fusion attribute into the cluster */
+
+            this.meta.clusters[0].addAttributes(this.meta.common.fusionAttr);
+        }
+
+        if (this.__hasPredicateInstance__()) {
+            this.meta.clusters[0].resolve();
         }
     }
 }

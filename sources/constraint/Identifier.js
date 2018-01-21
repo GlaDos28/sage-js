@@ -29,20 +29,20 @@ class Identifier {
         this.type = type;
 
         switch (type) {
-            case IdentType.BASIC:
-                this.id = args.id;
-                break;
-            case IdentType.TEMPLATED:
-                this.templateNum = args.templateNum;
-                this.postfix     = args.postfix;
-                break;
-            case IdentType.REDUCER:
-                this.templateNum = args.templateNum;
-                this.postfix     = args.postfix;
-                this.reduceFunc  = args.reduceFunc;
-                break;
-            default:
-                throw new Error("oops! Not supported identifier type: " + type);
+        case IdentType.BASIC:
+            this.id = args.id;
+            break;
+        case IdentType.TEMPLATED:
+            this.templateNum = args.templateNum;
+            this.postfix     = args.postfix;
+            break;
+        case IdentType.REDUCER:
+            this.templateNum = args.templateNum;
+            this.postfix     = args.postfix;
+            this.reduceFunc  = args.reduceFunc;
+            break;
+        default:
+            throw new Error("oops! Not supported identifier type: " + type);
         }
     }
 }
