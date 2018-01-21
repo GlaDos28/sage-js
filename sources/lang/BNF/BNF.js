@@ -1,6 +1,6 @@
 /**
  * ==========================
- * @description Backus-Naur form of grammar. Defines context-free grammars. Also semantic rules are allowed in nonterminal productions.
+ * @description Backus-Naur form of grammar. Defines context-free grammars. Also semantic rules are allowed in nonterminal productions. First element is chosen as root element.
  * Use BNF parser for getting BNF class instance by BNF string representation.
  * ==========================
  *
@@ -16,13 +16,15 @@ const BNFElemType = require("./BNFElemType");
 
 /**
  * @class
- * @classdesc Backus-Naur form of grammar. Defines context-free grammars. Also semantic rules are allowed in nonterminal productions. Use BNF parser for getting BNF class instance by BNF string representation.
+ * @classdesc Backus-Naur form of grammar. Defines context-free grammars. Also semantic rules are allowed in nonterminal productions. First element is chosen as root element. Use BNF parser for getting BNF class instance by BNF string representation.
  *
- * @property {{type:BNFElemType, str:(string|undefined), prods:(int[]|undefined), code:(string|undefined)}} elements BNF element definitions
+ * @property {{type:BNFElemType, symbol:(symbol|undefined), prods:(int[]|undefined), code:(string|undefined)}} elements BNF element definitions
+ * @property {boolean} skipWS skipping white space symbols when parsing text according to this grammar
  */
 class BNF {
-    constructor() {
+    constructor(skipWS = true) {
         this.elements = [];
+        this.skipWS   = skipWS;
     }
 
     addElement(type, args) {
@@ -30,7 +32,7 @@ class BNF {
 
         switch (type) {
         case BNFElemType.TERMINAL:
-            element.str = args.str;
+            element.symbol = args.symbol;
             break;
         case BNFElemType.NONTERMINAL:
             element.prods = [];
