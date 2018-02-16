@@ -34,6 +34,7 @@
     "nyc": "^11.4.1"
   },
   "dependencies": {
+    "deepcopy": "^0.6.3",
     "graphviz": "0.0.8",
     "jsesc": "^2.5.1"
   }

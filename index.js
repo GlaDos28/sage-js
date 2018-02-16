@@ -15,6 +15,41 @@ const ACN               = require("./sources/net/ACN");
 const AttributeBuilder  = require("./sources/dsl/AttributeBuilder");
 const ConstraintBuilder = require("./sources/dsl/ConstraintBuilder");
 
+const { parser : bnfParser } = require("./sources/lang/BNF/bnfParser");
+const BacktrackingParser     = require("./sources/lang/backtracking/BacktrackingParser");
+
+const bnfText = `
+S         -> Sum
+Sum       -> Summand { data.output = parseInt(data.value, 10); } Sum'
+Sum'      -> + Summand { data.output += parseInt(data.value, 10); } Sum' | e
+$Summand  -> { data.value = ""; } Digit Summand'
+$Summand' -> Digit Summand' | e
+$Digit    -> 0 { data.value += "0"; }
+           | 1 { data.value += "1"; }
+           | 2 { data.value += "2"; }
+           | 3 { data.value += "3"; }
+           | 4 { data.value += "4"; }
+           | 5 { data.value += "5"; }
+           | 6 { data.value += "6"; }
+           | 7 { data.value += "7"; }
+           | 8 { data.value += "8"; }
+           | 9 { data.value += "9"; }
+$WS       -> \\s | \\t | \\n`;
+
+const bnf    = bnfParser.parse(bnfText);
+const parser = BacktrackingParser.getBacktrackingParser(bnf);
+const parsed = parser.parse("2 + 2 + 228");
+
+console.log("Text was parsed successfully");
+console.log(`Result: ${parsed}`);
+
+
+
+
+if (true) {
+    return;
+}
+
 const net = new ACN();
 
 /* Adding attributes */
