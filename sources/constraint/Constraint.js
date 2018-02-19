@@ -35,7 +35,17 @@ class Constraint {
     }
 
     /**
-     * @desc pushes regexes into pushing trie. Must be called right after adding constraint into the ACN
+     * @desc Compiles predicate body into predicate instance. Must be called right after adding constraint into the ACN.
+     *
+     * @param {PADME} padme PADME instance
+     * @returns {void} nothing
+     */
+    compiledPredicate(padme) {
+        padme.buildPIR(this.predicate);
+    }
+
+    /**
+     * @desc Pushes regexes into pushing trie. Must be called right after adding constraint into the ACN.
      *
      * @param {map<string, Attribute>} attributes ACN attributes (mappings { attribute id (string) : attribute (Attribute) })
      * @param {PushingTrie} trie pushing trie to push regexes into

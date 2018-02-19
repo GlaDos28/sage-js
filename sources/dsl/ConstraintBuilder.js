@@ -14,8 +14,8 @@
 const Constraint = require("../constraint/Constraint");
 const Identifier = require("../constraint/Identifier");
 const IdentType  = require("../constraint/IdentType");
-const Predicate  = require("../constraint/predicate/Predicate");
 const Regex      = require("../misc/Regex");
+const Predicate  = require("../predicate/Predicate");
 
 /**
  * @class
@@ -23,7 +23,7 @@ const Regex      = require("../misc/Regex");
  *
  * @property {Regex[]} constrTemplates constraint templates
  * @property {{name:string,type:int,args:map}[]} deferredIdents constraint deferred identifiers which will be created due building
- * @property {Predicate} constrPredicate constraint predicate
+ * @property {string} predicateBody constraint predicate body in string form
  * @property {map<string, int>} templateNameMap mappings { template name : template index }
  * @property {map<string, int>} identNameMap mappings { ident name : ident index }
  */
@@ -31,7 +31,7 @@ class ConstraintBuilder {
     constructor() {
         this.constrTemplates = [];
         this.deferredIdents  = [];
-        this.constrPredicate = null;
+        this.predicateBody   = null;
         this.templateNameMap = {};
         this.identNameMap    = {};
     }
@@ -177,15 +177,15 @@ class ConstraintBuilder {
     /**
      * @desc Set constraint predicate.
      *
-     * @param {string} predicateScript script of predicate in string form
+     * @param {string} predicateBody predicate body in string form
      * @returns {ConstraintBuilder} self
      */
-    predicate(predicateScript) {
-        if (typeof predicateScript !== "string") {
-            throw new Error(`invalid argument for predicate: ${predicateScript}. Must be string with script`);
+    predicate(predicateBody) {
+        if (typeof predicateBody !== "string") {
+            throw new Error(`invalid argument for predicate: ${predicateBody}. Must be string with predicate body`);
         }
 
-        this.constrPredicate = new Predicate(predicateScript);
+        this.predicateBody = predicateBody;
 
         return this;
     }
@@ -215,13 +215,13 @@ class ConstraintBuilder {
             constrIdents.push(new Identifier(deferredIdent.type, deferredIdent.args));
         }
 
-        return new Constraint(this.constrTemplates, constrIdents, this.constrPredicate);
+        return new Constraint(this.constrTemplates, constrIdents, new Predicate(this.predicateBody));
     }
 
     /* Private methods */
 
     __ensureReadyForBuild__() {
-        if (this.constrPredicate === null) {
+        if (this.predicateBody === null) {
             throw new Error("constraint predicate must be set. Use predicate(<string>) method");
         }
 
