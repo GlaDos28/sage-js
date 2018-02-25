@@ -17,11 +17,15 @@ const Domain       = require("../attribute/Domain");
 const Segment      = require("../attribute/Segment");
 const AttrType     = require("../attribute/AttrType");
 
-const DOMAIN_MIN    = -1000000;
-const DOMAIN_MAX    = 1000000;
+const DOMAIN_MIN = -1000000;
+const DOMAIN_MAX = 1000000;
 
 const DEFAULT_DOMAIN = new Domain([new Segment(DOMAIN_MIN, DOMAIN_MAX)]);
 const DEFAULT_DISTR  = new Distribution((value) => 1 / (DOMAIN_MAX - DOMAIN_MIN), DEFAULT_DOMAIN);
+
+/* eslint-disable quote-props */
+
+const ATTR_TYPE_NUM = 4;
 
 const ATTR_TYPE_NAME_MAP = {
     "int"     : AttrType.INT,
@@ -70,7 +74,7 @@ class AttributeBuilder {
      * @returns {AttributeBuilder} self
      */
     type(type) {
-        if (typeof type === "number" && type >= 1 && type <= 4) {
+        if (typeof type === "number" && type >= 1 && type <= ATTR_TYPE_NUM) {
             this.attrType = type;
         } else if (typeof type === "string") {
             this.attrType = ATTR_TYPE_NAME_MAP[type];
@@ -100,9 +104,13 @@ class AttributeBuilder {
         const finalSegments = [];
 
         for (let i = 0; i < segments.length; i += 1) {
+            /* eslint-disable lines-around-comment, no-magic-numbers */
+
             if (!Array.isArray(segments[i]) || segments[i].length !== 2 || typeof segments[i][0] !== "number" || typeof segments[i][1] !== "number") {
                 throw new Error(`invalid "segments[${i}]" argument for distribution domain: ${segments[i]}. Must be array with two values [number, number]`);
             }
+
+            /* eslint-enable lines-around-comment, no-magic-numbers */
 
             finalSegments.push(new Segment(segments[i][0], segments[i][1]));
         }
@@ -122,14 +130,18 @@ class AttributeBuilder {
         const finalSegments = [];
 
         for (let i = 0; i < segments.length; i += 1) {
+            /* eslint-disable lines-around-comment, no-magic-numbers */
+
             if (!Array.isArray(segments[i]) || segments[i].length !== 2 || typeof segments[i][0] !== "number" || typeof segments[i][1] !== "number") {
                 throw new Error(`invalid "segments[${i}]" argument for attribute domain: ${segments[i]}. Must be array with two values [number, number]`);
             }
 
+            /* eslint-enable lines-around-comment, no-magic-numbers */
+
             finalSegments.push(new Segment(segments[i][0], segments[i][1]));
         }
 
-        this.domain = new Domain(segments);
+        this.attrDomain = new Domain(finalSegments);
 
         return this;
     }

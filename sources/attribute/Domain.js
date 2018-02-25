@@ -28,14 +28,20 @@ function ensureDisjoint(segs) {
 
 /**
  * @class
- * @classdesc Domain on real line. Defines intervals of determination for attributes and distributions. For non-number attribute types (such as strings and booleans) elements should be treated as numbered set of constant elements, so the same we get here. Each isolated point (including string enum constants) is the same as [left, right] where left = right.
+ * @classdesc Domain on real line. Defines intervals of determination for attributes and distributions.
+ * For non-number attribute types (such as strings and booleans) elements should be treated as numbered set of constant elements, so the same we get here.
+ * Each isolated point (including string enum constants) is the same as [left, right] where left = right.
  *
  * @property {Segment[]} segments array of segments [left, right]
  */
-class Domain {
+class Domain { /* TODO implement domain for strings and booleans */
     constructor(segments) {
         ensureDisjoint(segments);
         this.segments = segments;
+    }
+
+    toString() {
+        return JSON.stringify(this.segments);
     }
 }
 

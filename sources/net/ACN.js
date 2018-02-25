@@ -15,6 +15,7 @@ const Attribute   = require("../attribute/Attribute");
 const PushingTrie = require("../algorithms/PushingTrie");
 const graphviz    = require("graphviz");
 const jsesc       = require("jsesc");
+const randomSelection = require("../algorithms/generation/impl/randomSelection"); /* TODO remove plug */
 
 /**
  * @class
@@ -61,6 +62,7 @@ class ACN {
         }
 
         const attribute = new Attribute(id, null, null, null);
+
         attribute.fixValue(value);
 
         this.addAttribute(attribute);
@@ -75,16 +77,270 @@ class ACN {
     addConstraint(constraint) {
         this.constraints.push(constraint);
         constraint.pushToTrie(this.attributes, this.meta.pushingTrie);
+        //constraint.compilePredicate(this.padme); TODO uncoment
     }
 
     /**
-     * @desc Generate tvalues for given attributes.
+     * @desc Generate values for given attributes. Attributes must be strictly in one component of connectivity.
      *
-     * @param {string[]} attrIds attributes' identifiers. Must form a single component and be the only elements of this component
-     * @returns {object[]} generated tvalues for each attribute
+     * @param {string} attrIds attributes' identifiers. Must form a single component and be the only elements of this component
+     * @returns {object[]} generated values for each attribute
      */
-    generateComponent(attrIds) {
-        return null; /* TODO generate attributes */
+    generateComponent(...attrIds) {
+        this.__ensureValidComponent__(attrIds);
+
+        const attributes    = attrIds.map((attrId) => this.attributes[attrId]).filter((attribute) => !attribute.fixed);
+        const predicateData = [];
+        const clusterSet    = new Set();
+        const constraintSet = new Set();
+
+        for (const attribute of attributes) {
+            attribute.meta.clusters.filter((cluster) => cluster.resolved).forEach((cluster) => {
+                clusterSet.add(cluster);
+                constraintSet.add(cluster.constraint);
+            });
+        }
+
+        constraintSet.forEach((constraint) => {
+            const data = {
+                air : eval(constraint.predicate.body), /* TODO remove plug */
+                instanceGenerator : null
+            };
+
+            /* Initially filling attributes of each identifier type */
+
+            const basicIdents     = [];
+            const templatedIdents = [];
+            const reducerIdents   = [];
+
+            for (const basicIdentNum of constraint.meta.basicIdents.relatedIdents) {
+                basicIdents.push({
+                    ind  : basicIdentNum,
+                    attr : this.attributes[constraint.idents[basicIdentNum].id]
+                });
+            }
+
+            for (const template of constraint.meta.templatedIdents.tvalues) {
+                const idents = {
+                    identIndices : [],
+                    attrLists    : []
+                };
+
+                for (const identIndex of template.relatedIdents) {
+                    idents.identIndices.push(identIndex);
+                }
+
+                for (const identList of template.templateResolves) {
+                    const attrList = [];
+
+                    let addList = true;
+
+                    for (const ident of identList.resolvedIdents) {
+                        const attr = this.attributes[ident];
+
+                        if (!attr.fixed || attributes[attr.id] === undefined) { /* Do not add resolved template attributes which not included in generating attribute list */
+                            addList = false;
+                            break;
+                        }
+
+                        attrList.push(attr);
+                    }
+
+                    if (addList) {
+                        idents.attrLists.push(attrList);
+                    }
+                }
+
+                templatedIdents.push(idents);
+            }
+
+            for (const template of constraint.meta.reducerIdents.tvalues) {
+                for (let i = 0; i < template.relatedIdents.length; i += 1) {
+                    const reducerIdent = {
+                        ind   : template.relatedIdents[i],
+                        attrs : []
+                    };
+
+                    for (const ident of template.resolvedIdents[i]) {
+                        reducerIdent.attrs.push(this.attributes[ident]);
+                    }
+
+                    reducerIdents.push(reducerIdent);
+                }
+            }
+
+            /* Creating predicate instance generator */
+
+            data.instanceGenerator = function* () {
+                if (templatedIdents.length === 0) {
+                    const instance = [];
+
+                    /* Adding basic identifiers' attributes */
+
+                    for (const basicIdent of basicIdents) {
+                        instance[basicIdent.ind] = basicIdent.attr;
+                    }
+
+                    /* Adding reducer identifiers' attributes */
+
+                    for (const reducerIdent of reducerIdents) {
+                        const attrs = [];
+
+                        for (const attr of reducerIdents.attrs) {
+                            attrs.push(attr);
+                        }
+
+                        instance[reducerIdent.ind] = {
+                            reducer : true,
+                            code    : constraint.idents[reducerIdent.ind].reduceFunc,
+                            attrs   : attrs
+                        };
+                    }
+
+                    yield instance;
+                    return;
+                }
+
+                const tIndices = [];
+
+                for (let i = 0; i < templatedIdents.length; i += 1) {
+                    tIndices.push(0);
+                }
+
+                let cnt = 0;
+
+                while (cnt + 1 < tIndices.length || tIndices[cnt] < templatedIdents[cnt].attrLists.length) {
+                    const instance = [];
+
+                    for (let i = 0; i < constraint.idents.length; i += 1) {
+                        instance.push(null);
+                    }
+
+                    /* Adding basic identifiers' attributes */
+
+                    for (const basicIdent of basicIdents) {
+                        instance[basicIdent.ind] = basicIdent.attr;
+                    }
+
+                    /* Adding templated identifiers' attributes */
+
+                    for (let i = 0; i < templatedIdents.length; i += 1) {
+                        const template = templatedIdents[i];
+                        const attrList = template.attrLists[tIndices[i]];
+
+                        for (let j = 0; j < template.identIndices.length; j += 1) {
+                            instance[template.identIndices[j]] = attrList[j];
+                        }
+                    }
+
+                    /* Adding reducer identifiers' attributes */
+
+                    for (const reducerIdent of reducerIdents) {
+                        const attrs = [];
+
+                        for (const attr of reducerIdents.attrs) {
+                            attrs.push(attr);
+                        }
+
+                        instance[reducerIdent.ind] = {
+                            reducer : true,
+                            code    : constraint.idents[reducerIdent.ind].reduceFunc,
+                            attrs   : attrs
+                        };
+                    }
+
+                    /* Yielding predicate instance */
+
+                    yield instance;
+
+                    /* Consider next tuple of templated identifiers */
+
+                    tIndices[0] += 1;
+
+                    let i = 0;
+
+                    while (i + 1 < tIndices.length && tIndices[i] === templatedIdents[i].attrLists.length) {
+                        tIndices[i] = 0;
+                        i += 1;
+                        tIndices[i] += 1;
+                    }
+
+                    cnt = i;
+                }
+            };
+
+            /* Adding data of processed predicate */
+
+            predicateData.push(data);
+        });
+
+        const attributeDict = {};
+
+        for (const attribute of attributes) {
+            attributeDict[attribute.id] = attribute;
+        }
+
+        return randomSelection.generate(attributeDict, predicateData);
+    }
+
+    /**
+     * @desc Check the given attributes to belong to one component of connectivity. Throw errors if something is wrong.
+     *
+     * @param {string[]} attrIds identifiers of attributes which should be checked
+     * @returns {void} nothing
+     * @private
+     */
+    __ensureValidComponent__(attrIds) {
+        for (const attrId of attrIds) {
+            if (this.attributes[attrId] === undefined) {
+                throw new Error(`attribute "${attrId}" is not found in ACN`);
+            }
+        }
+
+        const attributes = attrIds.map((attrId) => this.attributes[attrId]).filter((attribute) => !attribute.fixed);
+
+        if (attributes.length === 0) {
+            return;
+        }
+
+        /* Checking attributes to share one component of connectivity  */
+
+        const rootComponent = attributes[0].meta.dsu.getComponent();
+
+        for (const attribute of attributes) {
+            if (attribute.meta.dsu.getComponent() !== rootComponent) {
+                throw new Error(`attributes "${attributes[0].id}" and "${attribute.id}" are in different components of connectivity`);
+            }
+        }
+
+        /* Checking attributes to form the whole component (except fixed attributes) */
+
+        const clusterSet       = new Set();
+        const inputAttrSet     = new Set();
+        const componentAttrSet = new Set();
+
+        for (const attribute of attributes) {
+            inputAttrSet.add(attribute);
+            attribute.meta.clusters.filter((cluster) => cluster.resolved).forEach((cluster) => clusterSet.add(cluster));
+        }
+
+        clusterSet.forEach((cluster) => {
+            for (const clusterAttribute of cluster.attributes) {
+                componentAttrSet.add(clusterAttribute);
+            }
+        });
+
+        const missedAttributes = [];
+
+        componentAttrSet.forEach((componentAttr) => {
+            if (!inputAttrSet.has(componentAttr) && !componentAttr.fixed) {
+                missedAttributes.push(componentAttr);
+            }
+        });
+
+        if (missedAttributes.length > 0) {
+            throw new Error(`the following attributes belong to generating attributes component, but not mention in input list: ${missedAttributes.map((attr) => attr.id)}`);
+        }
     }
 
     /**

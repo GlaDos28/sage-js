@@ -40,7 +40,7 @@ class Constraint {
      * @param {PADME} padme PADME instance
      * @returns {void} nothing
      */
-    compiledPredicate(padme) {
+    compilePredicate(padme) {
         padme.buildPIR(this.predicate);
     }
 
@@ -213,7 +213,6 @@ class Constraint {
     __initMeta__() {
         this.__initIdentMeta__();
         this.__initClusterMeta__();
-        this.__initPredicateMeta__();
     }
 
     __initIdentMeta__() {
@@ -307,10 +306,6 @@ class Constraint {
 
     __initClusterMeta__() {
         this.meta.clusters = [];
-    }
-
-    __initPredicateMeta__() {
-        /* TODO init meta for predicate */
     }
 
     __fusionClusters__() {

@@ -22,7 +22,7 @@ const IdentType = require("./IdentType");
  * @property {string|undefined} id attribute id (for IdentType.BASIC only)
  * @property {int|undefined} templateNum index of template used (for IdentType.TEMPLATED and IdentType.REDUCER only)
  * @property {string|undefined} postfix string added after template prefix (for IdentType.TEMPLATED and IdentType.REDUCER only)
- * @property {function|undefined} reduceFunc reducer function (for IdentType.REDUCER only)
+ * @property {string|undefined} reduceFunc reducer function in string form (for IdentType.REDUCER only)
  */
 class Identifier {
     constructor(type, args) {

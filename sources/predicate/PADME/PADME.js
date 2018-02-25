@@ -15,8 +15,6 @@
 
 "use strict";
 
-const Predicate = require("../Predicate");
-
 /**
  * @class
  * @classdesc Predicate Adjustable Data Manipulation Engine (PADME) - SAGA element which handles compiled predicates and their intermediate representations.

@@ -20,27 +20,30 @@
  * See PADME for more information.
  *
  * @property {string} body predicate body expression in language of predicates
- * @property {set<string>} acceptedForms set of accepted predicate forms' names
- * @property {PIR} pir compiled predicate into predicate intermediate representation (PIR). Used in PADME to get AIRs, which are used it attribute generation algorithms.
- * @property {AIR[]} airs transformed PIR into algorithm intermediate representation (AIR). Used in attribute generation algorithms.
+ * @property {set<FormName>} acceptedForms set of accepted predicate forms' names
+ * @property {PIR} pir compiled predicate into predicate intermediate representation (PIR). Used in PADME to get algorithm intermediate representations (AIRs)
+ * @property {map<int, AIR>} airs PIR transformations into AIRs { algorithm id : AIR }. Used in attribute generation algorithms
  */
 class Predicate {
     constructor(body) {
         this.body          = body;
         this.acceptedForms = null;
         this.pir           = null;
-        this.airs          = [];
+        this.airs          = {};
     }
 
     /**
-     * Compiles predicate body to get PIR.
+     * @desc Compiles predicate body to get PIR.
+     *
+     * @returns {void} nothing
      */
     compile() { /* TODO */
         this.pir = null;
+        throw new Error("predicate compiling is not supported");
     }
 
     /**
-     * Test predicate on the given forms, adding satisfied forms to accepted forms list.
+     * @desc Test predicate on the given forms, adding satisfied forms to accepted forms list.
      *
      * @param {PredicateForm[]} forms predicate forms to test
      * @returns {void} nothing
@@ -53,6 +56,22 @@ class Predicate {
                 this.acceptedForms.add(form.name);
             }
         }
+    }
+
+    /**
+     * @desc processes AIR for the given algorithm. If not all required forms are satisfied, an error is thrown.
+     *
+     * @param {AGAlgorithm} algorithm attribute generation algorithm for which AIR should be calculated
+     * @returns {void} nothing
+     */
+    processAIR(algorithm) {
+        for (const requiredForm of algorithm.requiredForms) {
+            if (!this.acceptedForms.has(requiredForm)) {
+                throw new Error(`Form "${requiredForm}" is not satisfied`);
+            }
+        }
+
+        this.airs[algorithm.id] = algorithm.transformFunc(this.pir);
     }
 
     toString() {

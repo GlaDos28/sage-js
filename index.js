@@ -15,7 +15,7 @@ const ACN               = require("./sources/net/ACN");
 const AttributeBuilder  = require("./sources/dsl/AttributeBuilder");
 const ConstraintBuilder = require("./sources/dsl/ConstraintBuilder");
 
-const { parser : bnfParser } = require("./sources/lang/BNF/bnfParser");
+/*const { parser : bnfParser } = require("./sources/lang/BNF/bnfParser");
 const BacktrackingParser     = require("./sources/lang/backtracking/BacktrackingParser");
 
 const bnfText = `
@@ -43,14 +43,65 @@ const parsed = parser.parse("2 + 2 + 228");
 console.log("Text was parsed successfully");
 console.log(`Result: ${parsed}`);
 
+if (true) {
+    return;
+}*/
 
+const net = new ACN();
 
+net.addAttribute(new AttributeBuilder()
+    .id("a1")
+    .type("int")
+    .domain([1, 10])
+    .build());
+
+net.addAttribute(new AttributeBuilder()
+    .id("a2")
+    .type("int")
+    .domain([1, 10])
+    .build());
+
+net.addAttribute(new AttributeBuilder()
+    .id("a3")
+    .type("int")
+    .domain([1, 10])
+    .build());
+
+net.addAttribute(new AttributeBuilder()
+    .id("a4")
+    .type("int")
+    .domain([1, 10])
+    .build());
+
+net.addAttribute(new AttributeBuilder()
+    .id("a5")
+    .type("int")
+    .domain([1, 10])
+    .build());
+
+net.addConstraint(new ConstraintBuilder()
+    .predicate("(a1, a2, a3, a4, a5) => a1 + a2 + a3 + a4 + a5 >= 25")
+    .basicIdent("a1", "a1")
+    .basicIdent("a2", "a2")
+    .basicIdent("a3", "a3")
+    .basicIdent("a4", "a4")
+    .basicIdent("a5", "a5")
+    .build());
+
+net.addConstraint(new ConstraintBuilder()
+    .predicate("(a1, a2, a3, a4, a5) => a1 + a2 + a3 + a4 + a5 <= 26")
+    .basicIdent("a1", "a1")
+    .basicIdent("a2", "a2")
+    .basicIdent("a3", "a3")
+    .basicIdent("a4", "a4")
+    .basicIdent("a5", "a5")
+    .build());
+
+console.log(JSON.stringify(net.generateComponent("a1", "a2", "a3", "a4", "a5")));
 
 if (true) {
     return;
 }
-
-const net = new ACN();
 
 /* Adding attributes */
 

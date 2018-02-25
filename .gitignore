@@ -36,3 +36,6 @@ coverage
 
 # package lock
 package-lock.json
+
+# .directory files
+.directory
